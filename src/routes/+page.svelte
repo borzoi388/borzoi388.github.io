@@ -1,5 +1,18 @@
 <script lang="ts">
-	let isFirstTime = true;
+	import { writable } from 'svelte/store'
+	import { onMount } from 'svelte'
+
+
+	let isFirstTime = writable("true");
+
+	onMount(() => {
+		const storedIsFirstTime = localStorage.getItem("isFirstTime");
+		isFirstTime = writable(storedIsFirstTime ? String(storedIsFirstTime) : "true")
+
+		isFirstTime.subscribe((value) => {
+			localStorage.setItem("isFirstTime", value.toString());
+		})
+	})
 
 
 	let cateNumber: number = 0
@@ -219,6 +232,7 @@
 		if (tasksubmission.length < 1) {
 			alert("Please input a title!")
 		} else {
+
 			let tempDate = getDate();
 			if (tempDate && tempDate < new Date()) {alert("Please enter a valid date!")} else {
 			months = [
@@ -231,7 +245,7 @@
 			tasksubmission = ""
 			taskdescription = ""
 			cateNumber = 0
-			isFirstTime = false
+			isFirstTime.update(() => "false");
 			isImportant = false
 				if (isSortingByDate) {
 					dateSortTasks();
@@ -593,7 +607,7 @@
 	</div>
 
 <div class="todolist border" style="padding: 5px; max-height: 70vh; overflow-y: scroll">
-	{#if (isFirstTime)}
+	{#if (isFirstTime == "true")}
 		<div class="blahaj">
 			<span class="message">Time to add a task! :3</span>
 		</div>
