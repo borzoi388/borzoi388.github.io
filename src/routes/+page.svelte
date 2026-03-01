@@ -34,10 +34,10 @@
 		{ color: "LightSteelBlue", text: "purple", custom: false},
 		{ color: "SlateGray", text: "lemonchiffon", custom: false},
 		{ color: "DarkSlateGray", text: "lemonchiffon", custom: false},
-		{ color: "#008FC4", text: "lemonchiffon", custom: false},
+		{ color: "url(/src/lib/images/weezer.jpg) center center / cover", text: "lemonchiffon", custom: false},
 	]
 
-	let isFirstTime = writable("true");
+	let isFirstTime =$state(writable("true"));
 	let months = writable<Array<Task>>([])
 	let categories = writable<Array<{color: number, name: string}>>([
 		{ color: 25, name: "Unsorted" },
@@ -61,7 +61,18 @@
 		completedTasks = writable(storedComp ? JSON.parse(storedComp) : []);
 
 		for (let i = 0; i < $months.length; i++) {
-			$months[i].date = new Date($months[i].date);
+			if ($months[i].date) {
+				$months[i].date = new Date($months[i].date);
+			}
+		}
+		for (let i = 0; i < $completedTasks.length; i++) {
+			if ($completedTasks[i].date) {
+				$completedTasks[i].date = new Date($completedTasks[i].date);
+			}
+		}
+
+		for (let i = 0; i < $completedTasks.length; i++) {
+			compButtonStates[i] = { restore: false, delete: false }
 		}
 
 		isFirstTime.subscribe((value) => {
@@ -83,33 +94,31 @@
 	})
 
 
-	let cateNumber: number = 0
-	let colorNumber: number = 4
+	let cateNumber: number = $state(0)
+	let colorNumber: number = $state(4)
 
-	let colorSubmission: string = ""
-	let addColorState: string = "colorPick"
-	let showCustom: boolean = false
+	let colorSubmission: string = $state("")
+	let addColorState: string = $state("colorPick")
+	let showCustom: boolean = $state(false)
 
-	let date: string | undefined
-	let time: string | undefined
+	let date: string | undefined = $state()
+	let time: string | undefined = $state()
 
 
-	let compButtonStates: Array<{restore: boolean, delete: boolean}> = [
-		{ restore: false, delete: false }
-	]
+	let compButtonStates: Array<{restore: boolean, delete: boolean}> = $state([])
 
 
 
 
-	let tasksubmission: string = ""
-	let taskdescription: string = ""
-	let isImportant: boolean = false
+	let tasksubmission: string = $state("")
+	let taskdescription: string = $state("")
+	let isImportant: boolean = $state(false)
 
-	let categorysubmission: string = ""
+	let categorysubmission: string = $state("")
 
-	let showCompleted: boolean = false
+	let showCompleted: boolean = $state(false)
 
-	let textDark: boolean = true
+	let textDark: boolean = $state(true)
 
 	let colorsOpen: boolean = false
 	let sortOpen: boolean = false
@@ -117,8 +126,8 @@
 	let addColsOpen: boolean = false
 	let addCateOpen: boolean = false;
 
-	let sortNumber: number = -1
-	let sortSearch: string = ""
+	let sortNumber: number = $state(- 1)
+	let sortSearch: string = $state("")
 
 	function dateSortTasks() {
 		for (let taskToAdd = 0; taskToAdd < $months.length; taskToAdd++) {
@@ -141,6 +150,16 @@
 		return temp
 	}
 
+	let file: FileList;
+
+	function readFile() {
+		console.log("dskhaah")
+		const reader = new FileReader();
+		reader.readAsDataURL(file[0])
+		reader.onload = () => { colorSubmission = "url("+(reader.result as string)+") center center / cover" };
+		file = new DataTransfer().files;
+	}
+
 	function indexSortTasks() {
 		for (let taskToAdd = 0; taskToAdd < $months.length; taskToAdd++) {
 			let mostRecent: number = taskToAdd;
@@ -154,7 +173,8 @@
 		}
 	}
 
-	let isSortingByDate: boolean = false
+	let isSortingByDate: boolean = $state(false)
+	let confirmDeleteComp: boolean = $state(false)
 
 	function toggleSortByDate() {
 		if (isSortingByDate) {
@@ -169,9 +189,13 @@
 		if (colorsOpen === false) {
 			colorsOpen = true
 			colorDialog.openDialog()
+			if ($colors.length > 29) {
+				customButton = true
+			}
 		} else {
 			colorsOpen = false
 			colorDialog.closeDialog()
+			customButton = false
 			addColDialog.closeDialog()
 			addColsOpen = false
 		}
@@ -187,6 +211,7 @@
 			addColDialog.closeDialog()
 			addColsOpen = false
 			colorDialog.closeDialog()
+			customButton = false
 			colorsOpen = false;
 		}
 	}
@@ -222,6 +247,8 @@
 			addColDialog.closeDialog()
 			addColsOpen = false
 			colorDialog.closeDialog()
+			customButton = false
+
 			colorsOpen = false
 			addCateDialog.closeDialog()
 			addCateOpen = false
@@ -230,6 +257,7 @@
 
 	function toggleImportant() {
 		isImportant = !isImportant;
+		console.log(isImportant)
 	}
 
 	function getDate(): Date | undefined {
@@ -260,11 +288,11 @@
 	
 	function addmonth() {
 		if (tasksubmission.length < 1) {
-			alert("Please input a title!")
+			popupOverlay.openPopup({image: randomErrorPopup(), msg: "Please input a title!"});
 		} else {
 
 			let tempDate = getDate();
-			if (tempDate && tempDate < new Date()) {alert("Please enter a valid date!")} else {
+			if (tempDate && tempDate < new Date()) {popupOverlay.openPopup({image: randomErrorPopup(), msg: "Please input a valid date!"});} else {
 			$months = [
 				...$months,
 				{ submission: tasksubmission, description: taskdescription, date: tempDate, category: cateNumber, important: isImportant, index: $months.length }
@@ -294,12 +322,53 @@
 			showCustom = false
 		}
 	}
+	
+	function randomErrorPopup(): string {
+		return [
+			"glup.jpg",
+			"gnulp.gif",
+			"sad.gif",
+			"water_cat.gif"
+		][Math.floor(Math.random()*4)]
+		
+	}
+
+	function randomCompletedPopup(): {image: string, msg: string} {
+		return {
+			image: [
+				"silly_dog.gif",
+				"thumbs.gif",
+				"yay.gif",
+				"gnarp.gif"
+			][Math.floor(Math.random()*4)],
+			msg: [
+				"WELL DONE!!!!!",
+				"NICE JOB!!!!!",
+				"GOOD WORK!!!",
+			][Math.floor(Math.random()*3)]
+		}
+	}
+
+	function randomImportantPopup(): {image: string, msg: string} {
+		return {
+			image: [
+				"knee.gif",
+				"splendid.gif",
+				"green_skeleton.gif",
+			][Math.floor(Math.random()*3)],
+			msg: [
+				"PHENOMENAL WORK!!",
+				"EXCELLENT JOB!!!",
+				"FANTASTIC!!!",
+			][Math.floor(Math.random()*3)]
+		}
+	}
 
 	function addCate() {
 		if (categorysubmission.length < 1) {
-			alert("Please input a title!")
+			popupOverlay.openPopup({image: randomErrorPopup(), msg: "Please input a title!"});
 		} else if (categorysubmission.length > 18) {
-			alert("Too long! Please keep it under 18 characters")
+			popupOverlay.openPopup({image: randomErrorPopup(), msg: "Too long! Keep it under 18 characters!"});
 		} else {
 			addCateDialog.closeDialog()
 			addCateOpen = false
@@ -307,6 +376,7 @@
 			addColDialog.closeDialog()
 			addColsOpen = false
 			colorDialog.closeDialog()
+			customButton = false
 			colorsOpen = false
 			$categories = [
 				...$categories,
@@ -322,6 +392,8 @@
 	function toggleColorPick() {
 		if (addColorState === "colorPick") {
 			addColorState = "inputCSS"
+		} else if (addColorState == "inputCSS"){
+			addColorState = "image"
 		} else {
 			addColorState = "colorPick"
 		}
@@ -334,6 +406,7 @@
 		addColorDialog.closeDialog()
 		addColsOpen = false
 		colorDialog.closeDialog()
+		customButton = false
 		colorsOpen = false
 	}
 
@@ -347,11 +420,20 @@
 		colorNumber = selected
 		colorsOpen = false
 		colorDialog.closeDialog()
+		customButton = false
 		addColDialog.closeDialog()
 		addColsOpen = false
 	}
 
-	function completed(selected: number) {
+	let customButton: boolean = $state(false)
+
+	async function completed(selected: number) {
+		if ($months[selected].important == true) {
+			popupOverlay.openPopup(randomImportantPopup());
+		} else {
+			console.log(randomCompletedPopup());
+			popupOverlay.openPopup(randomCompletedPopup());
+		}
 		$completedTasks = [
 			...$completedTasks,
 			$months[selected],
@@ -420,7 +502,7 @@
 
 	function addColor() {
 		if (colorSubmission.length < 1) {
-			alert("Please input a color!")
+			popupOverlay.openPopup({image: randomErrorPopup(), msg: "Please input a color!"});
 		} else {
 			if (textDark === true) {
 				$colors = [...$colors, {color: colorSubmission , text: "purple", custom: true}]
@@ -446,11 +528,13 @@
     import AddCateDialog from './addCateDialog.svelte'
 	import AddColDialog from './addColorDialog.svelte'
 	import SortByDialog from './sortByDialog.svelte'
-	let sortByDialog: undefined
-	let addColDialog: undefined
-	let addCateDialog: undefined
-	let colorDialog: undefined
-	let selectDialog: undefined
+    import PopupOverlay from './popupOverlay.svelte';
+	let sortByDialog: any
+	let addColDialog: any
+	let addCateDialog: any
+	let colorDialog: any
+	let selectDialog: any
+	let popupOverlay: any
 </script>
 <svelte:head>
 	<title>🧼that was a good bath🧼</title>
@@ -477,7 +561,7 @@
 
 		<div style="display: block; width: 100%">
 			<label class="text">Category:
-				<button on:click={toggleOpenCate} style="margin-bottom: 10px; background-color: {$colors[$categories[cateNumber].color].color}; color: {$colors[$categories[cateNumber].color].text}">
+				<button on:click={toggleOpenCate} style="margin-bottom: 10px; background: {$colors[$categories[cateNumber].color].color}; color: {$colors[$categories[cateNumber].color].text}">
 					{$categories[cateNumber].name}
 				</button>
 			</label>
@@ -485,7 +569,7 @@
 		<!--CATEGORY CHOOSE-->
 		<Dialog bind:this={selectDialog}>
 			{#each $categories as { color, name }, i}
-				<button on:click={() => selectCate(i)} style="background-color: {$colors[color].color}; margin: 5px; color: {$colors[color].text}">{name}</button>
+				<button on:click={() => selectCate(i)} style="background: {$colors[color].color}; margin: 5px; color: {$colors[color].text}">{name}</button>
 			{/each}
 			<button on:click={toggleAddCate} style="margin: 5px; background-color: transparent">＋</button>
 		</Dialog>
@@ -507,12 +591,12 @@
 			<div class="half" style="width: 100%; margin-bottom: 10px">
 				<div style="grid-column-start: col1; grid-column-end: middle; margin-right: 5px">
 					<label class="text">Color:
-						<button on:click={toggleColors} style="background-color: {$colors[colorNumber].color}; color: {$colors[colorNumber].text}">
+						<button on:click={toggleColors} style="background: {$colors[colorNumber].color}; color: {$colors[colorNumber].text}">
 							🦐
 						</button>
 					</label>
 				</div>
-				{#if $colors.length > 29 && colorsOpen === true}
+				{#if customButton}
 					<button on:click={toggleCustom} style="grid-column-start: middle; grid-column-end: end">
 						{#if showCustom === false}
 							Filter: All
@@ -527,14 +611,14 @@
 			<ColDialog bind:this={colorDialog}>
 				{#if showCustom === false}
 					{#each $colors as { color, text}, i}
-						<button on:click={() => selectColor(i)} style="background-color: {color}; margin: 5px; color: {text}">
+						<button on:click={() => selectColor(i)} style="background: {color}; margin: 5px; color: {text}">
 							🦐
 						</button>
 					{/each}
 				{:else}
 					{#each $colors as { color, text, custom }, i}
 						{#if custom === true}
-							<button on:click={() => selectColor(i)} style="background-color: {color}; margin: 5px; color: {text}">
+							<button on:click={() => selectColor(i)} style="background: {color}; margin: 5px; color: {text}">
 								🦐
 							</button>
 						{/if}
@@ -553,7 +637,19 @@
 			<input type="color" bind:value={colorSubmission}>
 			<div class="half" style="width: 100%">
 				<button on:click={toggleColorPick} style="grid-column-start: col1; grid-column-end: middle; margin-right: 5px">Input hex/CSS?</button>
-				<button on:click={toggleTextColor} style="grid-column-start: middle; grid-column-end: end; margin-left: 5px; background-color: {colorSubmission}">
+				<button on:click={toggleTextColor} style="grid-column-start: middle; grid-column-end: end; margin-left: 5px; background: {colorSubmission}">
+					{#if textDark === true}
+						<span style="color: purple">Light Text?</span>
+					{:else}
+						<span style="color: lemonchiffon">Dark Text?</span>
+					{/if}
+				</button>
+			</div>
+		{:else if addColorState === "inputCSS"}
+			<input type="text" bind:value={colorSubmission} placeholder="Input CSS Color/hex value (include #)">
+			<div class="half" style="width: 100%; overflow: visible">
+				<button on:click={toggleColorPick} style="grid-column-start: col1; grid-column-end: middle; margin-right: 5px">Input image?</button>
+				<button on:click={toggleTextColor} style="grid-column-start: middle; grid-column-end: end; margin-left: 5px; background: {colorSubmission}">
 					{#if textDark === true}
 						<span style="color: purple">Light Text?</span>
 					{:else}
@@ -562,17 +658,18 @@
 				</button>
 			</div>
 		{:else}
-			<input type="text" bind:value={colorSubmission} placeholder="Input CSS Color/hex value (include #)">
-			<div class="half" style="width: 100%; overflow: visible">
-				<button on:click={toggleColorPick} style="grid-column-start: col1; grid-column-end: middle; margin-right: 5px">Pick Color?</button>
-				<button on:click={toggleTextColor} style="grid-column-start: middle; grid-column-end: end; margin-left: 5px; background-color: {colorSubmission}">
-					{#if textDark === true}
-						<span style="color: purple">Light Text?</span>
-					{:else}
-						<span style="color: lemonchiffon">Dark Text?</span>
-					{/if}
-				</button>
-			</div>
+		<label class="hoverInput"> Upload Image
+			<input type="file" accept="image/png, image/jpg, image/gif" bind:files={file} on:change={readFile} style="display: none"></label>
+		<div class="half" style="width: 100%; overflow: visible">
+			<button on:click={toggleColorPick} style="grid-column-start: col1; grid-column-end: middle; margin-right: 5px">Pick Color?</button>
+			<button on:click={toggleTextColor} style="grid-column-start: middle; grid-column-end: end; margin-left: 5px; background: {colorSubmission}">
+				{#if textDark === true}
+					<span style="color: purple">Light Text?</span>
+				{:else}
+					<span style="color: lemonchiffon">Dark Text?</span>
+				{/if}
+			</button>
+		</div>
 		{/if}
 		<button on:click={addColor} style="display: block; margin-top: 10px;">
 			Submit
@@ -618,7 +715,7 @@
 				<label class="text">
 					Filter:
 						{#if sortNumber > -1}
-							<button on:click={toggleSort} style="background-color: {$colors[$categories[sortNumber].color].color}; color: {$colors[$categories[sortNumber].color].text}">{$categories[sortNumber].name}</button>
+							<button on:click={toggleSort} style="background: {$colors[$categories[sortNumber].color].color}; color: {$colors[$categories[sortNumber].color].text}">{$categories[sortNumber].name}</button>
 						{:else}
 							<button on:click={toggleSort}>None</button>
 						{/if}
@@ -630,7 +727,7 @@
 				Show All
 			</button>
 			{#each $categories as { color, name }, i}
-				<button on:click={() => sortCate(i)} style="background-color: {$colors[color].color}; margin: 5px; color: {$colors[color].text}">{name}</button>
+				<button on:click={() => sortCate(i)} style="background: {$colors[color].color}; margin: 5px; color: {$colors[color].text}">{name}</button>
 			{/each}
 		</SortByDialog>
 	</div>
@@ -638,7 +735,8 @@
 <div class="todolist border" style="padding: 5px; max-height: 70vh; overflow-y: scroll">
 	{#if ($isFirstTime == "true")}
 		<div class="blahaj">
-			<span class="message">Time to add a task! :3</span>
+			<span class="message">Time to add a task! :3</span><br>
+			<span class="message">Warning: app contains a lot of gifs and moving things‼️</span>
 		</div>
 	{:else if showCompleted === false}
 		{#if $months.length < 1}
@@ -651,7 +749,7 @@
 		)}
 			<div class="dawg">
 				<span class="message">
-					i cannor find them
+					None to be found. 
 				</span>
 			</div>
 		{:else}
@@ -673,7 +771,7 @@
 							</button>
 							<!--CATEGORY OF TASK-->
 							<div class="half" style="grid-column-start: task; grid-column-end: end; margin-left: 10px; ">
-								<div class="border cateLabel" style="padding: 10px; background-color: {$colors[$categories[category].color].color}; color: {$colors[$categories[category].color].text}">
+								<div class="border cateLabel" style="padding: 10px; background: {$colors[$categories[category].color].color};  color: {$colors[$categories[category].color].text}">
 									{$categories[category].name}
 								</div>
 
@@ -726,8 +824,8 @@
 							</button>
 							<!--CATEGORY OF TASK-->
 							<div class="half" style="grid-column-start: task; grid-column-end: end; margin-left: 10px">
-								<div class="border cateLabel" style="padding: 10px; background-color: {$colors[$categories[category].color].color}; color: {$colors[$categories[category].color].text}">
-									{$categories[category].name}
+								<div class="border cateLabel" style="padding: 10px; background: {$colors[$categories[category].color].color}; color: {$colors[$categories[category].color].text}">
+									{$categories[category].name} 
 								</div>
 
 								<!--TITLE OF TASK-->
@@ -773,10 +871,24 @@
 			)}
 			<div class="dawg">
 				<span class="message">
-					we do not have any of these items of which you speak, i'm afraid...
+					None to be found.
 				</span>
 			</div>
 		{:else}
+			{#if confirmDeleteComp}
+				<div class="half" style="width: 10vw; margin: auto">
+					<button on:click={() => confirmDeleteComp = false} style="grid-column-start: col1; margin-right: 2.5px; grid-column-end: middle; overflow-x: hidden; background: salmon">
+						Cancel
+					</button>
+					<button on:click={() => {$completedTasks = []; completedTasks.update(() => $completedTasks)}} style="grid-column-start: middle; margin-left: 2.5px; grid-column-end: end; overflow-x: hidden; background: salmon">
+						Confirm
+					</button>
+				</div>
+			{:else}
+				<button on:click={() => confirmDeleteComp = true} style="background: salmon">
+					Clear completed tasks
+				</button>
+			{/if}
 			{#each $completedTasks as { submission, description, date, category }, i}
 				{#if 
 					(sortNumber < 0 && sortSearch.length < 1) || 
@@ -787,7 +899,7 @@
 					<div class="task">
 						<!--CATEGORY OF TASK-->
 						<div class="half" style="grid-column-start: check; grid-column-end: end; margin-bottom: 5px;">
-							<div class="border cateLabel" style="padding: 10px; background-color: {$colors[$categories[category].color].color}; color: {$colors[$categories[category].color].text}; margin-bottom: 2.5px">
+							<div class="border cateLabel" style="padding: 10px; background: {$colors[$categories[category].color].color}; color: {$colors[$categories[category].color].text}; margin-bottom: 2.5px">
 								{$categories[category].name}
 							</div>
 
@@ -854,3 +966,4 @@
 		{/if}
 	</div>
 </section>
+<PopupOverlay bind:this={popupOverlay}/>

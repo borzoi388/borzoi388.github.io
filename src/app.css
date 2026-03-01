@@ -121,6 +121,27 @@ input:hover {
     transition: border-color 0.2s, color 0.2s;
 }
 
+.hoverInput:hover {
+    border-color: deeppink;
+    color: deeppink;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.hoverInput {
+    background: lemonchiffon;
+    border-style: solid;
+    border-color: purple;
+    border-width: 2px;
+    margin-bottom: 10px;
+    color: purple;
+    width: 100%;
+    transition: border-color 0.2s, color 0.2s;
+    box-sizing: border-box;
+     -webkit-box-sizing:border-box;
+     -moz-box-sizing: border-box;
+    padding: 5px;
+}
+
 button:hover {
     border-color: deeppink;
     color: deeppink;
@@ -157,7 +178,7 @@ span.message {
 }
 
 .yippee {
-    background: url(./lib/images/yippee.gif);
+    background: url(./lib/images/engineer_thumbs.gif);
     background-size: contain;
     background-repeat: no-repeat;
     color: deeppink;
