@@ -16,7 +16,7 @@
     background: url(./lib/images/dance)
 }
 .milk {
-    background: url(./lib/images/milk.gif)
+    background: url(./lib/images/milk.gif);
 }
 
 .pat-pat {
@@ -74,6 +74,17 @@
 .green_skeleton {
     background: url(./lib/images/green_skeleton.gif)
 }
+
+.thingy {
+    opacity: 0;
+    transition: opacity 0.1s;
+}
+
+.thingy:hover {
+    opacity: 1;
+    transition: opacity 0.1s;
+}
+
 
 h3 {
     color: purple;

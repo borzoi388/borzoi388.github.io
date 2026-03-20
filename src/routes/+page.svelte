@@ -40,8 +40,11 @@
 	]
 
 
+	let compButtonStates: Array<{restore: boolean, delete: boolean}> = $state([])
+
 	let isFirstTime =$state(writable("true"));
 	let showAddTask: boolean = $state(false);
+	let showCats: boolean = $state(false);
 	let months = $state(writable<Array<Task>>([]));
 	let categories = $state(writable<Array<{color: number, name: string}>>([
 		{ color: 25, name: "Unsorted" },
@@ -78,6 +81,10 @@
 			}
 		}
 
+		for (let i = 0; i < $completedTasks.length; i++) {
+			compButtonStates[i] = { restore: false, delete: false }
+		}
+
 
 
 		isFirstTime.subscribe((value) => {
@@ -96,58 +103,6 @@
 			localStorage.setItem("completed", JSON.stringify(value));
 		})
 	}
-	// onMount(() => {
-	// 	const storedIsFirstTime = localStorage.getItem("isFirstTime");
-	// 	const storedTasks = localStorage.getItem("tasks");
-	// 	const storedCates = localStorage.getItem("categories");
-	// 	const storedColors = localStorage.getItem("colors");
-	// 	const storedComp = localStorage.getItem("completed");
-
-	
-		
-	// 	isFirstTime = writable(storedIsFirstTime ? String(storedIsFirstTime) : "true")
-	// 	months = writable(storedTasks ? JSON.parse(storedTasks) : [])
-	// 	categories = writable(storedCates ? JSON.parse(storedCates) : [{ color: 25, name: "Unsorted" }])
-	// 	colors = writable(storedColors ? JSON.parse(storedColors) : [...defaultColors]);
-	// 	completedTasks = writable(storedComp ? JSON.parse(storedComp) : []);
-
-	// 	$isFirstTime == "true" ? showAddTask = true : showAddTask = false
-	// 	console.log(showAddTask)
-
-	// 	for (let i = 0; i < $months.length; i++) {
-	// 		if ($months[i].date) {
-	// 			$months[i].date = new Date($months[i].date);
-	// 		}
-	// 	}
-	// 	for (let i = 0; i < $completedTasks.length; i++) {
-	// 		if ($completedTasks[i].date) {
-	// 			$completedTasks[i].date = new Date($completedTasks[i].date);
-	// 		}
-	// 	}
-
-	// 	for (let i = 0; i < $completedTasks.length; i++) {
-	// 		compButtonStates[i] = { restore: false, delete: false }
-	// 	}
-
-
-	// 	isFirstTime.subscribe((value) => {
-	// 		localStorage.setItem("isFirstTime", value.toString());
-	// 	})
-	// 	months.subscribe((value) => {
-	// 		localStorage.setItem("tasks", JSON.stringify(value));
-	// 	})
-	// 	categories.subscribe((value) => {
-	// 		localStorage.setItem("categories", JSON.stringify(value));
-	// 	})
-	// 	colors.subscribe((value) => {
-	// 		localStorage.setItem("colors", JSON.stringify(value));
-	// 	})
-	// 	completedTasks.subscribe((value) => {
-	// 		localStorage.setItem("completed", JSON.stringify(value));
-	// 	})
-
-	// })
-
 
 	let cateNumber: number = $state(0)
 	let colorNumber: number = $state(4)
@@ -159,8 +114,6 @@
 	let date: string | undefined = $state()
 	let time: string | undefined = $state()
 
-
-	let compButtonStates: Array<{restore: boolean, delete: boolean}> = $state([])
 
 
 	let tasksubmission: string = $state("")
@@ -346,10 +299,10 @@
 
 			let tempDate = getDate();
 			if (tempDate && tempDate < new Date()) {popupOverlay.openPopup({image: randomErrorPopup(), msg: "Please input a valid date!"});} else {
-			$months = [
+			months.update(() => [
 				...$months,
 				{ submission: tasksubmission, description: taskdescription, date: tempDate, category: cateNumber, important: isImportant, index: $months.length }
-			]
+			])
 			date = undefined;
 			time = undefined;
 			showCompleted = false
@@ -503,10 +456,7 @@
 			...compButtonStates,
 			{ restore: false, delete: false }
 		]
-		$months.splice(selected, 1)
-		$months = $months
-		months.update(() => $months);
-		$completedTasks = $completedTasks
+		months.update(() => $months.filter((_, index) => index != selected));
 		completedTasks.update(() => $completedTasks)
 	}
 
@@ -523,7 +473,7 @@
 
 	function restoreTask(selected: number) {
 		if (compButtonStates[selected].restore === true) {
-			$months = [
+			months.update(() => [
 				...$months,
 				{ 
 					submission: $completedTasks[selected].submission, 
@@ -533,7 +483,7 @@
 					important: $completedTasks[selected].important,
 					index: $months.length
 				}
-			]
+			])
 			$completedTasks.splice(selected, 1)
 			compButtonStates.splice(selected, 1)
 			$completedTasks = $completedTasks
@@ -551,7 +501,7 @@
 	}
 
 	function toggleShowCom() {
-		if (showCompleted === true) {
+		if (showCompleted == true) {
 			showCompleted = false
 		} else {
 			showCompleted = true
@@ -590,6 +540,7 @@
 	import AddColDialog from './addColorDialog.svelte'
 	import SortByDialog from './sortByDialog.svelte'
     import PopupOverlay from './popupOverlay.svelte';
+	import CatOverlay from './catOverlay.svelte';
 	let sortByDialog: any
 	let addColDialog: any
 	let addCateDialog: any
@@ -754,6 +705,13 @@
 							Show Completed Tasks
 						{:else}
 							Hide Completed Tasks
+						{/if}
+					</button>
+					<button onclick={() => showCats = !showCats} class="pink">
+						{#if showCats === false}
+							Show Overdue Task Reminders
+						{:else}
+							Hide Overdue Task Reminders
 						{/if}
 					</button>
 
@@ -1029,6 +987,9 @@
 			</div>
 		</section>
 		<PopupOverlay bind:this={popupOverlay}/>
+		{#if (showCats)}
+			<CatOverlay tasks={$months}/>
+		{/if}
 	{:else}
 		<div style="width: 100vw; height: 100vh; position: fixed; top: 0px; left: 0px; background: lightpink; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 24px; font-style: italic; color: purple; text-align: center">
 			<span>Hi! Welcome to my to-do website. </span>
